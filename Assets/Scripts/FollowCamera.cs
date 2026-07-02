@@ -4,7 +4,7 @@ public class FollowCamera : MonoBehaviour
 {
     [SerializeField] private Transform target;
     [SerializeField] private Vector3 offset;
-    [SerializeField] private float smoothSpeed = 5f;
+    // [SerializeField] private float smoothSpeed = 5f;
 
     private void LateUpdate()
     {
@@ -13,10 +13,10 @@ public class FollowCamera : MonoBehaviour
             return;
         }
 
-        Vector3 desiredPosition = target.position + offset;
+        // Vector3 desiredPosition = target.position + offset;
 
-        Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed * Time.deltaTime);
+        // Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed * Time.deltaTime);
 
-        transform.position = smoothedPosition;
+        transform.position = target.position + offset;
     }
 }
