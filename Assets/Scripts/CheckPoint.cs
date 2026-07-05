@@ -21,4 +21,9 @@ public class CheckPoint : MonoBehaviour
         gameManager.SetCheckPoint(transform.position);
         isActivated = true;
     }
+
+    public void ResetCheckPoint()
+    {
+        isActivated = false;
+    }
 }

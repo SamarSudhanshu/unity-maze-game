@@ -5,22 +5,25 @@ public class GameManager : MonoBehaviour
 {
     private enum GameState
     {
-        Start,
         Playing,
         Paused,
         Won,
         Lost
     }
+
     private float elapsedTime;
-    private GameState currentGameState = GameState.Start;
     private int penaltyCount;
     private int currentScore;
     private Vector3 checkPointPosition;
+    private GameState currentGameState;
 
     [Header("References")]
     [SerializeField] private Rigidbody player;
     [SerializeField] private Transform startCheckPoint;
     [SerializeField] private UIManager uiManager;
+    [SerializeField] private CheckPoint[] checkPoints;
+    [SerializeField] private PatrolEnemy[] patrolEnemies;
+    [SerializeField] private LeaderboardManager leaderboardManager;
 
     [Header("Respawn Settings")]
     [SerializeField] private float respawnHeight = 0.5f;
@@ -30,36 +33,67 @@ public class GameManager : MonoBehaviour
     [SerializeField] private int obstaclePenalty = 50;
     [SerializeField] private float timePenaltyMultiplier = 2f;
 
+    private void Start()
+    {
+        StartGame();
+    }
+
     public void StartGame()
     {
+        Time.timeScale = 1f;
+
         elapsedTime = 0f;
         penaltyCount = 0;
         currentScore = startingScore;
 
+        checkPointPosition = startCheckPoint.position + Vector3.up * respawnHeight;
+
+        foreach (CheckPoint checkPoint in checkPoints)
+        {
+            checkPoint.ResetCheckPoint();
+        }
+
+        foreach (PatrolEnemy enemy in patrolEnemies)
+        {
+            enemy.ResetEnemy();
+        }
+
+        RespawnPlayer();
+
         currentGameState = GameState.Playing;
+    }
+
+    public void RestartGame()
+    {
+        StartGame();
+        uiManager.ShowHUD();
     }
 
     public void PauseGame()
     {
+        if (currentGameState != GameState.Playing)
+        {
+            return;
+        }
+
         currentGameState = GameState.Paused;
         Time.timeScale = 0f;
     }
 
     public void ResumeGame()
     {
+        if (currentGameState != GameState.Paused)
+        {
+            return;
+        }
+
         currentGameState = GameState.Playing;
         Time.timeScale = 1f;
     }
 
-    private void Start()
-    {
-        currentGameState = GameState.Start;
-        checkPointPosition = startCheckPoint.position + Vector3.up * respawnHeight;
-    }
-
     private void Update()
     {
-        if (currentGameState != GameState.Playing)
+        if (!IsPlaying)
         {
             return;
         }
@@ -79,14 +113,32 @@ public class GameManager : MonoBehaviour
 
     public void WinGame()
     {
+        if (currentGameState == GameState.Won)
+        {
+            return;
+        }
+
+        Time.timeScale = 0f;
         currentGameState = GameState.Won;
-        uiManager.ShowWinScreen();
+
+        if (leaderboardManager != null)
+        {
+            leaderboardManager.AddScore(currentScore);
+        }
+
+        uiManager.ShowWinScreen(currentScore, elapsedTime);
     }
 
     public void LoseGame()
     {
+        if (currentGameState == GameState.Lost)
+        {
+            return;
+        }
+
+        Time.timeScale = 0f;
         currentGameState = GameState.Lost;
-        uiManager.ShowLoseScreen();
+        uiManager.ShowLoseScreen(currentScore, elapsedTime);
     }
 
     public void AddPenalty()
@@ -127,12 +179,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.green;
-        Gizmos.DrawSphere(checkPointPosition, 0.2f);
-    }
-
+    public bool IsPlaying => currentGameState == GameState.Playing;
     public float ElapsedTime => elapsedTime;
     public int CurrentScore => currentScore;
 }
